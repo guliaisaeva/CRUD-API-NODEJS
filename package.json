@@ -1,0 +1,17 @@
+{
+  "name": "crud-api",
+  "version": "1.0.0",
+  "description": "Implementation of simple CRUD API using in-memory database underneath",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Node",
+    "Crud",
+    "Api"
+  ],
+  "author": "Gulia Isaeva",
+  "license": "ISC"
+}
