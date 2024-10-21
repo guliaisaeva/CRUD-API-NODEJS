@@ -1,5 +1,6 @@
 import http, { IncomingMessage, ServerResponse } from 'http';
 import dotenv from 'dotenv';
+import { v4 as uuidv4, validate as validateUuid } from 'uuid';
 import {
   getAllUsers,
   getUserById,
@@ -40,56 +41,57 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
     sendResponse(res, 200, getAllUsers());
   } else if (url && url.startsWith('/api/users/') && method === 'GET') {
     const userId = url.split('/')[3];
-    const user = getUserById(userId);
-
-    if (!user) {
-      sendResponse(res, 404, { message: 'User not found' });
+    if (!validateUuid(userId)) {
+      sendResponse(res, 400, { message: 'Invalid UUID format' });
     } else {
-      sendResponse(res, 200, user);
+      const user = getUserById(userId);
+      if (!user) {
+        sendResponse(res, 404, { message: 'User not found' });
+      } else {
+        sendResponse(res, 200, user);
+      }
     }
   } else if (url === '/api/users' && method === 'POST') {
     try {
       const newUser = await parseRequestBody(req);
-      if (
-        !newUser.username ||
-        typeof newUser.age !== 'number' ||
-        !Array.isArray(newUser.hobbies)
-      ) {
-        sendResponse(res, 400, { message: 'Invalid user data' });
-      } else {
-        const createdUser = createUser(
-          newUser.username,
-          newUser.age,
-          newUser.hobbies,
-        );
-        sendResponse(res, 201, createdUser);
-      }
+      const createdUser = createUser(
+        newUser.username,
+        newUser.age,
+        newUser.hobbies,
+      );
+      sendResponse(res, 201, createdUser);
     } catch (error) {
-      sendResponse(res, 400, { message: 'Invalid JSON format' });
+      sendResponse(res, 400, { message: 'Invalid user data' });
     }
   } else if (url && url.startsWith('/api/users/') && method === 'PUT') {
     const userId = url.split('/')[3];
-    try {
-      const updates = await parseRequestBody(req);
-      const updatedUser = updateUser(userId, updates);
-
-      if (!updatedUser) {
-        sendResponse(res, 404, { message: 'User not found' });
-      } else {
-        sendResponse(res, 200, updatedUser);
+    if (!validateUuid(userId)) {
+      sendResponse(res, 400, { message: 'Invalid UUID format' });
+    } else {
+      try {
+        const updates = await parseRequestBody(req);
+        const updatedUser = updateUser(userId, updates);
+        if (!updatedUser) {
+          sendResponse(res, 404, { message: 'User not found' });
+        } else {
+          sendResponse(res, 200, updatedUser);
+        }
+      } catch (error) {
+        sendResponse(res, 400, { message: 'Invalid JSON format' });
       }
-    } catch (error) {
-      sendResponse(res, 400, { message: 'Invalid JSON format' });
     }
   } else if (url && url.startsWith('/api/users/') && method === 'DELETE') {
     const userId = url.split('/')[3];
-    const isDeleted = deleteUser(userId);
-
-    if (isDeleted) {
-      res.writeHead(204);
-      res.end();
+    if (!validateUuid(userId)) {
+      sendResponse(res, 400, { message: 'Invalid UUID format' });
     } else {
-      sendResponse(res, 404, { message: 'User not found' });
+      const isDeleted = deleteUser(userId);
+      if (isDeleted) {
+        res.writeHead(204);
+        res.end();
+      } else {
+        sendResponse(res, 404, { message: 'User not found' });
+      }
     }
   } else {
     sendResponse(res, 404, { message: 'Route not found' });
