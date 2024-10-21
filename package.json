@@ -3,15 +3,40 @@
   "version": "1.0.0",
   "description": "Implementation of simple CRUD API using in-memory database underneath",
   "main": "index.js",
-  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start:dev": "nodemon --exec ts-node src/index.ts",
+    "start:prod": "npm run build && node build/index.js",
+    "test": "jest",
+    "build": "tsc",
+    "start:multi": "node src/cluster.js"
   },
   "keywords": [
     "Node",
     "Crud",
-    "Api"
+    "Api",
+    "Gulia Isaeva"
   ],
   "author": "Gulia Isaeva",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/dotenv": "^6.1.1",
+    "@types/jest": "^29.5.13",
+    "@types/node": "^22.7.7",
+    "@types/uuid": "^10.0.0",
+    "cross-env": "^7.0.3",
+    "eslint": "^9.13.0",
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.7",
+    "prettier": "^3.3.3",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.6.3",
+    "webpack": "^5.95.0",
+    "webpack-cli": "^5.1.4"
+  }
 }
