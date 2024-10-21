@@ -37,64 +37,74 @@ const parseRequestBody = (req: IncomingMessage): Promise<any> => {
 const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
   const { method, url } = req;
 
-  if (url === '/api/users' && method === 'GET') {
-    sendResponse(res, 200, getAllUsers());
-  } else if (url && url.startsWith('/api/users/') && method === 'GET') {
-    const userId = url.split('/')[3];
-    if (!validateUuid(userId)) {
-      sendResponse(res, 400, { message: 'Invalid UUID format' });
-    } else {
-      const user = getUserById(userId);
-      if (!user) {
-        sendResponse(res, 404, { message: 'User not found' });
+  try {
+    if (url === '/api/users' && method === 'GET') {
+      sendResponse(res, 200, getAllUsers());
+    } else if (url && url.startsWith('/api/users/') && method === 'GET') {
+      const userId = url.split('/')[3];
+      if (!validateUuid(userId)) {
+        sendResponse(res, 400, { message: 'Invalid UUID format' });
       } else {
-        sendResponse(res, 200, user);
+        const user = getUserById(userId);
+        if (!user) {
+          sendResponse(res, 404, { message: 'User not found' });
+        } else {
+          sendResponse(res, 200, user);
+        }
       }
-    }
-  } else if (url === '/api/users' && method === 'POST') {
-    try {
+    } else if (url === '/api/users' && method === 'POST') {
       const newUser = await parseRequestBody(req);
-      const createdUser = createUser(
-        newUser.username,
-        newUser.age,
-        newUser.hobbies,
-      );
-      sendResponse(res, 201, createdUser);
-    } catch (error) {
-      sendResponse(res, 400, { message: 'Invalid user data' });
-    }
-  } else if (url && url.startsWith('/api/users/') && method === 'PUT') {
-    const userId = url.split('/')[3];
-    if (!validateUuid(userId)) {
-      sendResponse(res, 400, { message: 'Invalid UUID format' });
-    } else {
-      try {
+      if (
+        !newUser.username ||
+        typeof newUser.age !== 'number' ||
+        !Array.isArray(newUser.hobbies)
+      ) {
+        sendResponse(res, 400, { message: 'Invalid user data' });
+      } else {
+        const createdUser = createUser(
+          newUser.username,
+          newUser.age,
+          newUser.hobbies,
+        );
+        sendResponse(res, 201, createdUser);
+      }
+    } else if (url && url.startsWith('/api/users/') && method === 'PUT') {
+      const userId = url.split('/')[3];
+
+      if (!validateUuid(userId)) {
+        sendResponse(res, 400, { message: 'Invalid UUID format' });
+      } else {
         const updates = await parseRequestBody(req);
         const updatedUser = updateUser(userId, updates);
+
         if (!updatedUser) {
           sendResponse(res, 404, { message: 'User not found' });
         } else {
           sendResponse(res, 200, updatedUser);
         }
-      } catch (error) {
-        sendResponse(res, 400, { message: 'Invalid JSON format' });
       }
-    }
-  } else if (url && url.startsWith('/api/users/') && method === 'DELETE') {
-    const userId = url.split('/')[3];
-    if (!validateUuid(userId)) {
-      sendResponse(res, 400, { message: 'Invalid UUID format' });
-    } else {
-      const isDeleted = deleteUser(userId);
-      if (isDeleted) {
-        res.writeHead(204);
-        res.end();
+    } else if (url && url.startsWith('/api/users/') && method === 'DELETE') {
+      const userId = url.split('/')[3];
+
+      if (!validateUuid(userId)) {
+        sendResponse(res, 400, { message: 'Invalid UUID format' });
       } else {
-        sendResponse(res, 404, { message: 'User not found' });
+        const isDeleted = deleteUser(userId);
+        if (isDeleted) {
+          res.writeHead(204);
+          res.end();
+        } else {
+          sendResponse(res, 404, { message: 'User not found' });
+        }
       }
+    } else {
+      sendResponse(res, 404, {
+        message: 'Route not found,not existing endpoint',
+      });
     }
-  } else {
-    sendResponse(res, 404, { message: 'Route not found' });
+  } catch (error) {
+    console.error('Server Error:', error);
+    sendResponse(res, 500, { message: 'Internal Server Error' });
   }
 };
 
